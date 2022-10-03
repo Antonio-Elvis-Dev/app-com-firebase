@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { StatusBar as ExpoStatusBar } from "expo-status-bar";
+
 import {
   View,
   Text,
@@ -8,6 +10,7 @@ import {
   ActivityIndicator,
   SafeAreaView,
   FlatList,
+  StatusBar,
 } from "react-native";
 import firebase from "./src/config/firebaseConnection";
 console.disableYellowBox = true;
@@ -15,6 +18,7 @@ console.disableYellowBox = true;
 export default function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [user, setUser] = useState("");
 
   async function cadatrar() {
     await firebase
@@ -22,6 +26,7 @@ export default function App() {
       .createUserWithEmailAndPassword(email, password)
       .then((value) => {
         alert("Usuario criado: " + value.user.email);
+        setUser(value.user.email);
       })
       .catch((error) => {
         if (error.code === "auth/weak-password") {
@@ -37,8 +42,33 @@ export default function App() {
         }
       });
   }
+
+  async function logar() {
+    await firebase
+      .auth()
+      .signInWithEmailAndPassword(email, password)
+      .then((value) => {
+        alert("Bem-vindo: " + value.user.email);
+        setUser(value.user.email)
+      })
+      .catch((error) => {
+        alert("ops algo deu errado");
+        return;
+      });
+    setEmail("");
+    setPassword("");
+  }
+
+  async function logout() {
+    await firebase.auth().signOut();
+    setUser("");
+    alert("Saiu");
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[styles.container, { marginTop: StatusBar.currentHeight }]}
+    >
       <Text style={styles.textoInf}>Email:</Text>
 
       <TextInput
@@ -67,6 +97,34 @@ export default function App() {
       >
         <Text>Cadastrar</Text>
       </TouchableOpacity>
+      <TouchableOpacity
+        onPress={logar}
+        style={[
+          styles.input,
+          { alignItems: "center", backgroundColor: "#6ef5ff" },
+        ]}
+      >
+        <Text>Logar</Text>
+      </TouchableOpacity>
+
+      <Text
+        style={{ justifyContent: "center", fontSize: 20, textAlign: "center" }}
+      >
+        {user}
+      </Text>
+
+      {user.length > 0 ? (
+         <TouchableOpacity
+         onPress={logout}
+         style={[
+           styles.input,
+           { alignItems: "center", backgroundColor: "#6ef5ff" },
+         ]}
+       >
+         <Text>Sair</Text>
+       </TouchableOpacity>
+       ):(<Text style={{textAlign:"center"}}>Nenhum usuario logado</Text>)}
+     
     </SafeAreaView>
   );
 }
@@ -74,7 +132,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#a9f1e8",
-    marginTop: "10%",
     justifyContent: "center",
   },
 
